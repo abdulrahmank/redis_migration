@@ -1,0 +1,12 @@
+serialzationType: messagePackSerialization
+lastMigrationRun: 0
+migrations: 
+   1: 
+      keyPattern: families
+      className: java.util.ArrayList
+      tasks: 
+      -  renamed: 
+            path: head$vehicles[~]
+            from: wheels
+            to: wheelType
+modelVersion: 1

@@ -1,0 +1,23 @@
+serialzationType: messagePackSerialization
+lastMigrationRun: 0
+migrations: 
+   1: 
+      keyPattern: person
+      className: java.util.LinkedHashMap
+      tasks: 
+      -  renamed: 
+            path: ~
+            from: name
+            to: personName
+      -  added: 
+            path: ~
+            name: name1
+            type: java.lang.String
+      -  added: 
+            path: ~
+            name: name2
+            type: java.lang.String
+      -  deleted: 
+            path: ~
+            name: name2
+modelVersion: 1

@@ -1,0 +1,12 @@
+serialzationType: messagePackSerialization
+lastMigrationRun: 0
+migrations: 
+   1: 
+      keyPattern: family
+      className: java.util.LinkedHashMap
+      tasks: 
+      -  renamed: 
+            path: head$vehicles[~]
+            from: wheels
+            to: wheelType
+modelVersion: 1
