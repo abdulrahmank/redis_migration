@@ -10,6 +10,8 @@ for running those tasks.
 
 Once the tasks are run the Yaml file provided, to the api, will have an updated `lastMigrationRun` field.
 
+Currently the support is only for message pack serialization.
+
 Installing:
 
     Installing can be done using jitpack repo, which fetches dependent jars from github.
@@ -27,7 +29,7 @@ Installing:
     2. Add Dependency:
 
         dependencies {
-                compile 'com.github.abdulrahmank:redis_migration:1.0'
+                compile 'com.github.abdulrahmank:redis_migration:1.0.0'
         }
 
 Usage:
