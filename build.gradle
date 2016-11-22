@@ -45,7 +45,3 @@ dependencies {
     testCompile 'org.mockito:mockito-all:1.9.5'
     testCompile "org.powermock:powermock-mockito-release-full:1.6.1"
 }
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
-}
