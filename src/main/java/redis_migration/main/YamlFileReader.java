@@ -1,4 +1,4 @@
-package redis_migration;
+package redis_migration.main;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;

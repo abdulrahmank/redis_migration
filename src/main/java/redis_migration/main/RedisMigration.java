@@ -1,7 +1,11 @@
-package redis_migration;
+package redis_migration.main;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import redis_migration.migration.tasks.AdditionMigrationTask;
+import redis_migration.migration.tasks.DeletionMigrationTask;
+import redis_migration.migration.tasks.MigrationTask;
+import redis_migration.migration.tasks.RenameMigrationTask;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,6 +17,7 @@ import java.util.Set;
 public class RedisMigration {
 
     public interface RedisInterface {
+
         Set<byte[]> keys(byte[] keys);
 
         void setKey(byte[] key, byte[] modifiedValue);
@@ -20,38 +25,7 @@ public class RedisMigration {
         byte[] get(byte[] key);
 
         void close();
-    }
 
-    public interface MigrationTask {
-        Map migrationAction(Map map, String oldVariableName, String newVariableName);
-    }
-
-    class RenameMigrationTask implements MigrationTask {
-
-        @Override
-        public Map migrationAction(Map map, String oldVariableName, String newVariableName) {
-            map.put(newVariableName, map.get(oldVariableName));
-            map.remove(oldVariableName);
-            return map;
-        }
-    }
-
-    class AdditionMigrationTask implements MigrationTask {
-
-        @Override
-        public Map migrationAction(Map map, String variableName, String variableType) {
-            map.put(variableName, null);
-            return map;
-        }
-    }
-
-    class DeletionMigrationTask implements MigrationTask {
-
-        @Override
-        public Map migrationAction(Map map, String variableToDelete, String newVariableName) {
-            map.remove(variableToDelete);
-            return map;
-        }
     }
 
     public void runMigration(RedisInterface redisInterface, String redisYmlFile) throws IOException,
