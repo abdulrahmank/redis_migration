@@ -1,4 +1,4 @@
-package redis_migration;
+package redis_migration.main;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.esotericsoftware.yamlbeans.YamlWriter;
@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 import redis.clients.jedis.Jedis;
-import redis_migration.main.RedisMigration;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -33,7 +32,7 @@ public class RedisMigrationTest {
 
     @Before
     public void setup() throws JsonProcessingException {
-        // For Integration test
+        // For Populating redis db
         jedis = new Jedis("localhost", 6379);
         ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
         byte[] bytes = objectMapper.writeValueAsBytes(new Family());
@@ -43,36 +42,11 @@ public class RedisMigrationTest {
         jedis.set("family".getBytes(), bytes);
         jedis.set("person".getBytes(), bytesPerson);
         jedis.set("families".getBytes(), bytesFamilies);
-//        redisInterface = new RedisMigration.RedisInterface() {
-//            @Override
-//            public Set<byte[]> keys(byte[] keys) {
-//                return jedis.keys(keys);
-//            }
-//
-//            @Override
-//            public void setKey(byte[] key, byte[] modifiedValue) {
-//                jedis.set(key, modifiedValue);
-//            }
-//
-//            @Override
-//            public byte[] get(byte[] key) {
-//                return jedis.get(key);
-//            }
-//
-//            @Override
-//            public void close() {
-//                try {
-//                    jedis.disconnect();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        };
-
     }
 
     @After
     public void tearDown() throws Exception {
+        // decrement yaml file
         YamlReader reader = new YamlReader(new FileReader(redisYmlFile));
         Map map = (Map) reader.read();
 
@@ -81,6 +55,8 @@ public class RedisMigrationTest {
         YamlWriter var3 = new YamlWriter(new FileWriter(redisYmlFile));
         var3.write(map);
         var3.close();
+        // flushing db
+        jedis.flushAll();
     }
 
     @Test
