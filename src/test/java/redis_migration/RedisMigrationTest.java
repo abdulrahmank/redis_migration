@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
 import redis.clients.jedis.Jedis;
+import redis_migration.main.RedisMigration;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -95,7 +96,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentInRootObject.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentInRootObject.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -121,7 +122,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentAtAnyLevelObject.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentAtAnyLevelObject.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -144,7 +145,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentInsideArrayAtAnyLevelObject.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentInsideArrayAtAnyLevelObject.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -167,7 +168,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentInRootObjectGivenRootObjectIsArrayOfObjects.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentInRootObjectGivenRootObjectIsArrayOfObjects.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -190,7 +191,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -213,7 +214,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentInsideArrayAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentInsideArrayAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -236,7 +237,7 @@ public class RedisMigrationTest {
         when(redisInterface.keys(keyBytes)).thenReturn(jedis.keys(keyBytes));
         when(redisInterface.get(keyBytes)).thenReturn(jedis.get(keyBytes));
 
-        redisYmlFile = "renamePropertyIfPresentInsideMapAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
+        redisYmlFile = "./testData/renamePropertyIfPresentInsideMapAtAnyLevelObjectGivenRootObjectIsArrayOfObjects.yml";
         new RedisMigration().runMigration(redisInterface, redisYmlFile);
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
