@@ -7,6 +7,15 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven'
+
+group = 'com.github.abdulrahmank'
+
+install {
+    repositories.mavenInstaller {
+        pom.version = '1.0.0'
+    }
+}
 
 jar {
     baseName = 'redis_migration'
