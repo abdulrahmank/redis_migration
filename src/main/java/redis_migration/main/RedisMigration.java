@@ -31,48 +31,47 @@ public class RedisMigration {
     public void runMigration(RedisInterface redisInterface, String redisYmlFile) throws IOException,
             ClassNotFoundException, IllegalAccessException, InstantiationException {
 
-        YamlFileReader yamlFileReader = new YamlFileReader(redisYmlFile).readYmlFile();
-        int lastMigrationRun = yamlFileReader.getLastMigrationRun();
-        int modelVersion = yamlFileReader.getModelVersion();
-        Map yamlMap = yamlFileReader.getMap();
-        ObjectMapper objectMapper = yamlFileReader.getObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
+        byte[] modelVersion = redisInterface.get("modelVersion".getBytes());
+        YamlFileReaders readers = new YamlFileReaders(objectMapper.convertValue(modelVersion, String.class));
 
-        if (lastMigrationRun < modelVersion) {
+        for (YamlFileReader yamlFileReader : readers) {
+            yamlFileReader.readYmlFile();
+            Map yamlMap = yamlFileReader.getMap();
+            ObjectMapper serializationSpecificObjMapper = yamlFileReader.getObjectMapper();
+
             Map migrations = yamlFileReader.getMigrations();
-            for (int migrationNumber = lastMigrationRun + 1; migrationNumber <= modelVersion; migrationNumber++) {
-                Map migrationDescription = (Map) (migrations.get(String.valueOf(migrationNumber)));
-                List migrationTasks = (List) migrationDescription.get("tasks");
-                String keyPattern = migrationDescription.get("keyPattern").toString();
-                String mainModelClass = migrationDescription.get("className").toString();
+            List migrationTasks = (List) migrations.get("tasks");
+            String keyPattern = migrations.get("keyPattern").toString();
+            String mainModelClass = migrations.get("className").toString();
 
-                Object mainObject;
-                Set<byte[]> keys = redisInterface.keys(keyPattern.getBytes());
-                for (byte[] key : keys) {
-                    Class<?> outerClassType = Class.forName(mainModelClass);
+            Object mainObject;
+            Set<byte[]> keys = redisInterface.keys(keyPattern.getBytes());
+            for (byte[] key : keys) {
+                Class<?> outerClassType = Class.forName(mainModelClass);
 
-                    Object o = objectMapper.convertValue(outerClassType.newInstance(), Object.class);
-                    boolean value = o instanceof List;
-                    if (!value) {
-                        mainObject = objectMapper.readValue(redisInterface.get(key), Map.class);
-                        runMigrationTasks(migrationTasks, (Map) mainObject);
-                    } else {
-                        mainObject = objectMapper.readValue(redisInterface.get(key), Map[].class);
-                        for (Map mapObject : (Map[]) mainObject)
-                            runMigrationTasks(migrationTasks, mapObject);
-                    }
-
-                    byte[] classNames = objectMapper.writeValueAsBytes(objectMapper.convertValue(mainObject,
-                            outerClassType));
-                    redisInterface.setKey(key, classNames);
-
+                Object o = serializationSpecificObjMapper.convertValue(outerClassType.newInstance(), Object.class);
+                boolean value = o instanceof List;
+                if (!value) {
+                    mainObject = serializationSpecificObjMapper.readValue(redisInterface.get(key), Map.class);
+                    runMigrationTasks(migrationTasks, (Map) mainObject);
+                } else {
+                    mainObject = serializationSpecificObjMapper.readValue(redisInterface.get(key), Map[].class);
+                    for (Map mapObject : (Map[]) mainObject)
+                        runMigrationTasks(migrationTasks, mapObject);
                 }
-                redisInterface.close();
+
+                byte[] classNames = serializationSpecificObjMapper.writeValueAsBytes(serializationSpecificObjMapper.convertValue(mainObject,
+                        outerClassType));
+                redisInterface.setKey(key, classNames);
+
             }
+            redisInterface.close();
             incrementLastMigrationRunCounterAndUpdateYml(redisYmlFile, yamlMap);
         }
     }
 
-    private void runMigrationTasks(List migrationTasks, Map mapObject) {
+    private void runMigrationTasks(List migrationTasks, Map mapObject) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         for (Object migrationTask : migrationTasks) {
             MigrationTask migrationTaskObject = null;
             String param1 = null;
@@ -81,6 +80,7 @@ public class RedisMigration {
             Map renamed = (Map) ((Map) migrationTask).get("renamed");
             Map added = (Map) ((Map) migrationTask).get("added");
             Map deleted = (Map) ((Map) migrationTask).get("deleted");
+            Map custom = (Map) ((Map) migrationTask).get("custom");
 
             if (renamed != null && !renamed.isEmpty()) {
                 migrationTaskObject = new RenameMigrationTask();
@@ -96,6 +96,10 @@ public class RedisMigration {
                 migrationTaskObject = new DeletionMigrationTask();
                 param1 = deleted.get("name").toString();
                 path = deleted.get("path").toString();
+            } else if (custom != null && !custom.isEmpty()) {
+                Class<? extends MigrationTask> migrationJavaFile = (Class<? extends MigrationTask>)
+                        Class.forName(custom.get("migrationJavaFile").toString());
+                migrationTaskObject = migrationJavaFile.newInstance();
             }
 
             doMigrate(mapObject, path, param1, param2, "", migrationTaskObject);
@@ -142,13 +146,13 @@ public class RedisMigration {
                             oldVariableNameWithPathCopy.replace(pathToRenamedVariable[0] + "$", ""),
                             param1,
                             param2,
-                            innerPath, new RenameMigrationTask());
+                            innerPath, migrationTask);
                 } else if (!innerPath.isEmpty()) {
                     doMigrate(objectToBeModified,
                             innerPath,
                             param1,
                             param2,
-                            "", new RenameMigrationTask());
+                            "", migrationTask);
                 } else {
                     migrationTask.migrationAction(objectToBeModified, param1, param2);
                 }
@@ -158,9 +162,8 @@ public class RedisMigration {
                     innerPath,
                     param1,
                     param2,
-                    "", new RenameMigrationTask());
+                    "", migrationTask);
         }
-
 
     }
 

@@ -13,8 +13,6 @@ class YamlFileReader {
     private String redisYmlFile;
     private ObjectMapper objectMapper;
     private Map map;
-    private int modelVersion;
-    private int lastMigrationRun;
     private Map migrations;
 
     public YamlFileReader(String redisYmlFile) {
@@ -29,29 +27,17 @@ class YamlFileReader {
         return map;
     }
 
-    public int getModelVersion() {
-        return modelVersion;
-    }
-
-    public int getLastMigrationRun() {
-        return lastMigrationRun;
-    }
-
     public Map getMigrations() {
         return migrations;
     }
 
-    public YamlFileReader readYmlFile() throws FileNotFoundException, YamlException {
+    public void readYmlFile() throws FileNotFoundException, YamlException {
         objectMapper = new ObjectMapper(new MessagePackFactory());
         YamlReader reader = new YamlReader(new FileReader(redisYmlFile));
 
         map = (Map) reader.read();
 
-        modelVersion = Integer.valueOf(map.get("modelVersion").toString());
-        lastMigrationRun = Integer.valueOf(map.get("lastMigrationRun").toString());
-
         migrations = (Map) map.get("migrations");
-        return this;
     }
 
 }
