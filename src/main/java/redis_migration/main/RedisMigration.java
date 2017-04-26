@@ -9,10 +9,8 @@ import redis_migration.migration.tasks.RenameMigrationTask;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RedisMigration {
 
@@ -32,44 +30,48 @@ public class RedisMigration {
             ClassNotFoundException, IllegalAccessException, InstantiationException {
 
         YamlFileReader yamlFileReader = new YamlFileReader(redisYmlFile).readYmlFile();
-        int lastMigrationRun = yamlFileReader.getLastMigrationRun();
-        int modelVersion = yamlFileReader.getModelVersion();
-        Map yamlMap = yamlFileReader.getMap();
         ObjectMapper objectMapper = yamlFileReader.getObjectMapper();
-
-        if (lastMigrationRun < modelVersion) {
-            Map migrations = yamlFileReader.getMigrations();
-            for (int migrationNumber = lastMigrationRun + 1; migrationNumber <= modelVersion; migrationNumber++) {
-                Map migrationDescription = (Map) (migrations.get(String.valueOf(migrationNumber)));
-                List migrationTasks = (List) migrationDescription.get("tasks");
-                String keyPattern = migrationDescription.get("keyPattern").toString();
-                String mainModelClass = migrationDescription.get("className").toString();
-
-                Object mainObject;
-                Set<byte[]> keys = redisInterface.keys(keyPattern.getBytes());
-                for (byte[] key : keys) {
-                    Class<?> outerClassType = Class.forName(mainModelClass);
-
-                    Object o = objectMapper.convertValue(outerClassType.newInstance(), Object.class);
-                    boolean value = o instanceof List;
-                    if (!value) {
-                        mainObject = objectMapper.readValue(redisInterface.get(key), Map.class);
-                        runMigrationTasks(migrationTasks, (Map) mainObject);
-                    } else {
-                        mainObject = objectMapper.readValue(redisInterface.get(key), Map[].class);
-                        for (Map mapObject : (Map[]) mainObject)
-                            runMigrationTasks(migrationTasks, mapObject);
-                    }
-
-                    byte[] classNames = objectMapper.writeValueAsBytes(objectMapper.convertValue(mainObject,
-                            outerClassType));
-                    redisInterface.setKey(key, classNames);
-
-                }
-                redisInterface.close();
-            }
-            incrementLastMigrationRunCounterAndUpdateYml(redisYmlFile, yamlMap);
+        Integer jsonVersion = objectMapper.readValue(redisInterface.get("jsonVersion".getBytes()), Integer.class);
+        if (jsonVersion == null) {
+            jsonVersion = 0;
         }
+        Map yamlMap = yamlFileReader.getMap();
+
+        Map migrations = yamlFileReader.getMigrations();
+        Integer finalJsonVersion = jsonVersion;
+        Object collect1 = migrations.keySet().stream().filter(migrationNum -> (Integer) migrationNum > finalJsonVersion).collect(Collectors.toSet());
+        Set<Integer> collect = (Set<Integer>) collect1;
+
+        for (Integer migrationNumber: collect) {
+            Map migrationDescription = (Map) (migrations.get(String.valueOf(migrationNumber)));
+            List migrationTasks = (List) migrationDescription.get("tasks");
+            String keyPattern = migrationDescription.get("keyPattern").toString();
+            String mainModelClass = migrationDescription.get("className").toString();
+
+            Object mainObject;
+            Set<byte[]> keys = redisInterface.keys(keyPattern.getBytes());
+            for (byte[] key : keys) {
+                Class<?> outerClassType = Class.forName(mainModelClass);
+
+                Object o = objectMapper.convertValue(outerClassType.newInstance(), Object.class);
+                boolean value = o instanceof List;
+                if (!value) {
+                    mainObject = objectMapper.readValue(redisInterface.get(key), Map.class);
+                    runMigrationTasks(migrationTasks, (Map) mainObject);
+                } else {
+                    mainObject = objectMapper.readValue(redisInterface.get(key), Map[].class);
+                    for (Map mapObject : (Map[]) mainObject)
+                        runMigrationTasks(migrationTasks, mapObject);
+                }
+
+                byte[] classNames = objectMapper.writeValueAsBytes(objectMapper.convertValue(mainObject,
+                        outerClassType));
+                redisInterface.setKey(key, classNames);
+
+            }
+            redisInterface.close();
+        }
+        incrementLastMigrationRunCounterAndUpdateYml(redisYmlFile, yamlMap);
     }
 
     private void runMigrationTasks(List migrationTasks, Map mapObject) {

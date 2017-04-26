@@ -1,6 +1,5 @@
 serialzationType: messagePackSerialization
-lastMigrationRun: 0
-migrations: 
+migrations:
    1: 
       keyPattern: family
       className: java.util.LinkedHashMap
@@ -9,4 +8,3 @@ migrations:
             path: head
             from: name
             to: personName
-modelVersion: 1
